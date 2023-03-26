@@ -1,56 +1,73 @@
-import React, { useState } from 'react';
-import './Carousel.css'
+import React, { useEffect, useState } from "react";
+import axios from 'axios';
+import "./Carousel.css";
+import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
+import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 
-const Carousel = ({ imgArray }) => {
+function Carousel({ sliders, infinte }) {
+    const [currImg, setCurrImg] = useState(0);
+    const [imgArray, setImgArray] = useState([]);
 
-    const [currentIndex, setCurrentIndex] = useState(0);
+    useEffect(() => {
+        axios.get(`http://localhost:3600/api/carousel?slides=${sliders}`)
+            .then(function (response) {
+                // handle success
+                console.log("response.data", response?.data);
+                setImgArray(response?.data)
+            })
+            .catch(function (error) {
+                // handle error 
+                console.log(error);
+            })
+            .finally(function () {
+                // always executed
+            });
+    }, []);
 
-    {/* Next button */}
-    const next = () => {
-        setCurrentIndex((currentIndex + 1) % imgArray.length);
-    };
+    useEffect(() => {
 
-    {/* Previous button */}
-    const prev = () => {
-        setCurrentIndex((currentIndex - 1 + imgArray.length) % imgArray.length);
-    };
+        if (infinte) {
+            setInterval(() => {
+                currImg < imgArray.length - 1 ? setCurrImg(currImg + 1) : setCurrImg(0)
+            }, 10000);
+        }
+
+    }, [infinte])
 
     return (
-        <>
-            <div className='slider-container'>
-                {imgArray.map((photo) => (
+        <div className="carousel">
+            <div
+                className="carouselInner"
+                style={{ backgroundImage: `url(${imgArray[currImg]?.image})` }}
+            >
+                {imgArray.length >= 2 ?
                     <div
-                        key={photo.id}
-                        className={
-                            imgArray[currentIndex].id === photo.id ? 'fade' : 'slide fade'
-                        }
+                        className="left"
+                        onClick={() => {
+                            currImg > 0 && setCurrImg(currImg - 1);
+                        }}
                     >
-                        <img src={photo.image} alt={photo.title} className='photo' />
-                        <div className='caption'>{photo.title}</div>
-                    </div>
-                ))}
+                        <ArrowBackIosIcon style={{ fontSize: 30 }} />
+                    </div> : <></>
+                }
+                <div className="center">
+                    <h1>{imgArray[currImg]?.title}</h1>
+                    <p>{imgArray[currImg]?.subTitle}</p>
+                </div>
+                {imgArray.length >= 2 ?
+                    <div
+                        className="right"
+                        onClick={() => {
+                            currImg < imgArray.length - 1 && setCurrImg(currImg + 1);
+                        }}
+                    >
+                        <ArrowForwardIosIcon style={{ fontSize: 30 }} />
+                    </div> : <></>
 
-                {/* Previous button */}
-                <button onClick={() => prev()} className='prev'/>
-
-                {/* Next button */}
-                <button onClick={() => next()} className='next'/>
+                }
             </div>
-
-            <div className='dots'>
-                {imgArray.map((photo) => (
-                    <span
-                        key={photo.id}
-                        className={
-                            imgArray[currentIndex].id === photo.id ? 'dot active' : 'dot'
-                        }
-                        onClick={() => setCurrentIndex(imgArray.indexOf(photo))}
-                    ></span>
-                ))}
-            </div>
-
-        </>
-    )
+        </div>
+    );
 }
 
-export default Carousel
+export default Carousel;
